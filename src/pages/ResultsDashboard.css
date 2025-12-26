@@ -30,6 +30,15 @@
     margin-top: 15px;
 }
 
+.category-info-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    width: 100%;
+}
+
 .category-card {
     background: #2a2a2a;
     padding: 25px;
@@ -37,6 +46,9 @@
     margin-bottom: 30px;
     border: 2px solid transparent;
     transition: all 0.3s ease;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .category-card.card-collapsed:hover {
@@ -45,15 +57,17 @@
     transform: translateY(-2px);
 }
 
-.category-card h2 {
+.category-title {
     color: #ffd700;
-    margin-bottom: 15px;
+    margin: 0; 
     text-align: center;
+    font-size: 1.8em;
 }
 
+
 .click-prompt {
+    margin-top: 15px;
     text-align: center;
-    padding: 20px;
     color: #aaa;
     font-style: italic;
     animation: pulse-text 2s infinite;
@@ -72,6 +86,7 @@
     text-align: center;
     border-top: 1px solid #444;
     padding-top: 15px;
+    width: 100%;
 }
 
 .results-list {
@@ -79,6 +94,8 @@
     flex-direction: column;
     gap: 15px;
     animation: fadeIn 0.5s ease-out;
+    width: 100%;
+    margin-top: 20px;
 }
 
 @keyframes fadeIn {

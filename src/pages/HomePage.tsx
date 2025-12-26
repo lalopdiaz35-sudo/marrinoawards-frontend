@@ -9,17 +9,17 @@ const HomePage: React.FC = () => {
     <div className="homepage-container">
       <section className="hero-section">
         <h1 className="hero-title">
-          Bienvenidos a los <span className="award-name">Marrino Awards</span>
+          Bienvenidos a los <span className="award-name">Marrino Awards 2025</span>
         </h1>
         <p className="hero-subtitle">
-          Celebrando la comunidad marrina durante el año
+          Premios a todos los marrinos por sus logros este año
         </p>
         <div className="hero-actions">
           <Link to="/votacion" className="hero-button">
             Votar
           </Link>
           <Link to="/categorias" className="hero-button outline-button">
-            Categorías Marrinas
+            Categorías Marrino Awards
           </Link>
         </div>
       </section>
@@ -28,12 +28,13 @@ const HomePage: React.FC = () => {
         <div className="about-content">
           <h2>¿Qué son los Marrino Awards?</h2>
           <p>
-            Los Marrino Awards son nuestra forma de reconocer y celebrar los mejores momentos del año a nivel marrino. 
-            Desde las decisiones más 1/michi hasta las
-            anécdotas más N , aquí premiamos las hazañas que han marcado nuestros días.
+            Los Marrino Awards son nuestra forma de reconocer a cada marrino por sus logros en el año 
+            o en algunos casos premios a la mediocridad , desde crecimeindo personal , academico , laboral o lo 
+            que chingados sea , hay premios para todos.
+            
           </p>
           <p>
-            Es un tributo a la comunidad marrina, donde votaremos al mejor o peor de cada categoria del año
+            En este año se agrego una pagina web para inmortalizar las hazañas de todos los marrinos.
           </p>
         </div>
         <div className="image-placeholder">

@@ -107,8 +107,8 @@ const ParticipantsPage: React.FC = () => {
     return (
         <div className="participants-container">
             <header className="page-header">
-                <h1>✨ Nuestros Marrinos Participantes ✨</h1>
-                <p>Conoce a los nominados de este año y sus grandes hazañas.</p>
+                <h1>Marrinos Participantes </h1>
+                <p>Los nominados de este año :</p>
             </header>
 
             <div className="participants-grid">

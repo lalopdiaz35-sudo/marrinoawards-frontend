@@ -343,7 +343,7 @@ const VotingPage: React.FC = () => {
             )}
             
             <header className="page-header">
-                <h1>🗳️ Vota para decidir ganadores de cada categoria de los Marrino Awards 🏆</h1>
+                <h1> Vota para decidir ganadores de cada categoria de los Marrino Awards 2025</h1>
                 <p>Tu voto es único. Navega por las {categories.length} categorías</p>
                 <div className="pagination-info">Página {currentPage} de {totalPages}</div>
             </header>
@@ -351,7 +351,7 @@ const VotingPage: React.FC = () => {
             <form onSubmit={handleSubmit}>
                 {currentPage === 1 && (
                     <div className="email-input-group">
-                        <label htmlFor="email">Tu Correo Electrónico (Para evitar votos duplicados)</label>
+                        <label htmlFor="email">Tu Correo Electrónico (correo valido y nomas uno pendejo )</label>
                         <input 
                             type="email" 
                             id="email" 

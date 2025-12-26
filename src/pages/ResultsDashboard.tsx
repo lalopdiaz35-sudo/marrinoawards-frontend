@@ -43,18 +43,13 @@ const ResultsDashboard: React.FC = () => {
     const [rawResults, setRawResults] = useState<AggregationResult[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [currentPage, setCurrentPage] = useState(1);
-    
+       const [currentPage, setCurrentPage] = useState(1);
     const [showResults, setShowResults] = useState(false);
 
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const [
-                    categoriesRes,
-                    participantsRes,
-                    resultsRes
-                ] = await Promise.all([
+                const [categoriesRes, participantsRes, resultsRes] = await Promise.all([
                     axios.get(API_CATEGORIES_URL),
                     axios.get(API_PARTICIPANTS_URL),
                     axios.get(API_RESULTS_URL)
@@ -62,8 +57,7 @@ const ResultsDashboard: React.FC = () => {
 
                 setCategories(categoriesRes.data);
                 setParticipants(participantsRes.data);
-                setRawResults(resultsRes.data);
-
+                 setRawResults(resultsRes.data);
             } catch (err) {
                 console.error("Error al cargar datos del dashboard:", err);
                 setError('❌ Error al cargar los resultados. Asegúrate de que todas las APIs estén funcionando.');
@@ -71,8 +65,7 @@ const ResultsDashboard: React.FC = () => {
                 setLoading(false);
             }
         };
-
-        fetchData();
+           fetchData();
     }, []);
 
     const dashboardData: CategoryResult[] = useMemo(() => {
@@ -82,8 +75,7 @@ const ResultsDashboard: React.FC = () => {
 
         const categoryMap = new Map(categories.map(c => [c._id, c.name]));
         const participantMap = new Map(participants.map(p => [p._id, p.nickname]));
-
-        const groupedResults = new Map<string, { total: number, participants: { id: string, count: number }[] }>();
+          const groupedResults = new Map<string, { total: number, participants: { id: string, count: number }[] }>();
 
         for (const result of rawResults) {
             const catId = result._id.categoryId;
@@ -99,8 +91,7 @@ const ResultsDashboard: React.FC = () => {
             categoryEntry.participants.push({ id: partId, count: count });
         }
 
-        const finalResults: CategoryResult[] = [];
-
+         const finalResults: CategoryResult[] = [];
         for (const [catId, data] of groupedResults.entries()) {
             const categoryName = categoryMap.get(catId) || `Categoría ID: ${catId}`;
             const isOpenEnded = OPEN_ENDED_CATEGORIES.includes(categoryName);
@@ -126,9 +117,7 @@ const ResultsDashboard: React.FC = () => {
                 isOpenEnded: isOpenEnded,
             });
         }
-
-        return finalResults;
-
+        return finalResults;    
     }, [rawResults, categories, participants]);
 
     const totalPages = dashboardData.length;
@@ -141,13 +130,7 @@ const ResultsDashboard: React.FC = () => {
         } else {
             setCurrentPage(prev => Math.max(1, prev - 1));
         }
-    };
-
-    const obtenerAnioAjustado = () => {
-        const anioActual = new Date().getFullYear();
-        return anioActual < 2025 ? 2025 : anioActual;
-    };
-    const anioParaMostrar = obtenerAnioAjustado();
+    };  
 
     if (loading) return <div className="dashboard-container"><p>⏳ Cargando resultados...</p></div>;
     if (error) return <div className="dashboard-container"><p className="error-message">{error}</p></div>;
@@ -156,74 +139,66 @@ const ResultsDashboard: React.FC = () => {
     return (
         <div className="dashboard-container">
             <header className="dashboard-header">
-                <h1>📊 Resultados Marrino Awards {anioParaMostrar}</h1>
-                <p>Análisis de votos: {currentCategory.categoryName} (Categoría {currentPage} de {totalPages})</p>
+                <h1>📊 Resultados Marrino Awards 2025</h1>
+                <p>Análisis de votos: Categoría {currentPage} de {totalPages}</p>
                 <div className="total-votes-summary">
-                    Total de Votos Globales Registrados: 
-                    <strong> {categories.length > 0 ? categories.length * (rawResults.length / categories.length) : rawResults.length}</strong>
+                    Votos en esta categoría: <strong>{currentCategory.totalVotes}</strong>
                 </div>
             </header>
 
             <div 
                 className={`category-card ${showResults ? 'card-expanded' : 'card-collapsed'}`}
                 onClick={() => setShowResults(!showResults)}
-                style={{ cursor: 'pointer' }}
-            >
-                <h2>{currentCategory.categoryName}</h2>
-                
-                {!showResults ? (
-                    <div className="click-prompt">
-                        <p> Haz clic para revelar la clasificacion de esta categoria</p>
-                    </div>
-                ) : (
-                    <>
-                        <p className="category-total">🗳️ Votos Totales para esta Categoría: <strong>{currentCategory.totalVotes}</strong></p>
-                        <div className="results-list">
-                            {currentCategory.participants.map((p, index) => (
-                                <div key={p.nickname + index} className={`participant-result ${index === 0 ? 'winner' : ''}`}>
-                                    <span className="rank">{index + 1}.</span>
-                                    
-                                    <span className="name">
-                                        {currentCategory.isOpenEnded && p.nickname.length > 50
-                                            ? p.nickname.substring(0, 50) + '...'
-                                            : p.nickname
-                                        }
-                                    </span>
-
-                                    <div className="bar-container">
-                                        <div 
-                                            className="vote-bar" 
-                                            style={{ width: `${p.percentage.toFixed(1)}%` }}
-                                        ></div>
-                                    </div>
-                                    <span className="vote-count">
-                                        <strong>{p.votes}</strong> votos ({p.percentage.toFixed(1)}%)
-                                    </span>
-                                    {index === 0 && <span className="trophy">🏆</span>}
-                                </div>
-                            ))}
+            >   
+                {/* Contenedor centralizado para título y mensaje */}
+                <div className="category-info-wrapper">
+                    <h2 className="category-title">{currentCategory.categoryName}</h2>
+                    
+                    {!showResults && (
+                        <div className="click-prompt">
+                            <p>Haz clic para revelar la clasificación de esta categoría</p>
                         </div>
-                    </>
+                    )}
+                </div>
+
+                {showResults && (
+                    <div className="results-list">
+                        {currentCategory.participants.map((p, index) => (
+                            <div key={p.nickname + index} className={`participant-result ${index === 0 ? 'winner' : ''}`}>
+                                <span className="rank">{index + 1}.</span>
+                                <span className="name">
+                                    {currentCategory.isOpenEnded && p.nickname.length > 50
+                                        ? p.nickname.substring(0, 50) + '...'
+                                        : p.nickname
+                                    }
+                                </span>
+                                <div className="bar-container">
+                                    <div 
+                                        className="vote-bar" 
+                                        style={{ width: `${p.percentage.toFixed(1)}%` }}
+                                    ></div>
+                                </div>
+                                <span className="vote-count">
+                                    <strong>{p.votes}</strong> ({p.percentage.toFixed(1)}%)
+                                </span>
+                                {index === 0 && <span className="trophy">🏆</span>}
+                            </div>
+                        ))}
+                    </div>
                 )}
             </div>
 
             <div className="pagination-controls">
-                <button
-                    onClick={() => handlePageChange('prev')}
-                    disabled={currentPage === 1}
-                >
-                    &larr; Categoría Anterior
+                <button onClick={() => handlePageChange('prev')} disabled={currentPage === 1}>
+                    &larr; Anterior
                 </button>
-                <span>Categoría {currentPage} / {totalPages}</span>
-                <button
-                    onClick={() => handlePageChange('next')}
-                    disabled={currentPage === totalPages}
-                >
-                    Categoría Siguiente &rarr;
+                <span>{currentPage} / {totalPages}</span>
+                <button onClick={() => handlePageChange('next')} disabled={currentPage === totalPages}>
+                    Siguiente &rarr;
                 </button>
             </div>
         </div>
     );
 };
 
-export default ResultsDashboard;
+    export default ResultsDashboard;
