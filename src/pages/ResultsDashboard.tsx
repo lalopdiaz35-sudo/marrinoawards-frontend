@@ -11,28 +11,31 @@ const OPEN_ENDED_CATEGORIES = ["Top pendejito externo", "Mejor momento del año"
 interface CategoryType {
     _id: string;
     name: string;
+    description?: string;
+    imageUrl?: string;
 }
 
 interface ParticipantType {
     _id: string;
     nickname: string;
+    imageUrl?: string;
 }
 
 interface AggregationResult {
-    _id: {
-        categoryId: string;
-        participantId: string;
-    };
+    _id: { categoryId: string; participantId: string; };
     count: number;
 }
 
 interface CategoryResult {
     categoryName: string;
+    categoryDescription: string;
+    categoryImage: string;
     totalVotes: number;
     participants: {
         nickname: string;
         votes: number;
         percentage: number;
+        userImage: string;
     }[];
     isOpenEnded: boolean;
 }
@@ -43,7 +46,7 @@ const ResultsDashboard: React.FC = () => {
     const [rawResults, setRawResults] = useState<AggregationResult[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-       const [currentPage, setCurrentPage] = useState(1);
+    const [currentPage, setCurrentPage] = useState(1);
     const [showResults, setShowResults] = useState(false);
 
     useEffect(() => {
@@ -54,18 +57,16 @@ const ResultsDashboard: React.FC = () => {
                     axios.get(API_PARTICIPANTS_URL),
                     axios.get(API_RESULTS_URL)
                 ]);
-
                 setCategories(categoriesRes.data);
                 setParticipants(participantsRes.data);
-                 setRawResults(resultsRes.data);
+                setRawResults(resultsRes.data);
             } catch (err) {
-                console.error("Error al cargar datos del dashboard:", err);
-                setError('❌ Error al cargar los resultados. Asegúrate de que todas las APIs estén funcionando.');
+                setError('❌ Error al cargar los resultados.');
             } finally {
                 setLoading(false);
             }
         };
-           fetchData();
+        fetchData();
     }, []);
 
     const dashboardData: CategoryResult[] = useMemo(() => {
@@ -73,114 +74,115 @@ const ResultsDashboard: React.FC = () => {
             return [];
         }
 
-        const categoryMap = new Map(categories.map(c => [c._id, c.name]));
-        const participantMap = new Map(participants.map(p => [p._id, p.nickname]));
-          const groupedResults = new Map<string, { total: number, participants: { id: string, count: number }[] }>();
+        const categoryMap = new Map(categories.map(c => [
+            c._id, 
+            { name: c.name, img: c.imageUrl, desc: c.description || "" }
+        ]));
+        
+        const participantMap = new Map(participants.map(p => [
+            p._id, 
+            { nickname: p.nickname, img: p.imageUrl }
+        ]));
+        
+        const groupedResults = new Map<string, { total: number, participants: { id: string, count: number }[] }>();
 
         for (const result of rawResults) {
             const catId = result._id.categoryId;
-            const partId = result._id.participantId;
-            const count = result.count;
-
             if (!groupedResults.has(catId)) {
                 groupedResults.set(catId, { total: 0, participants: [] });
             }
-
             const categoryEntry = groupedResults.get(catId)!;
-            categoryEntry.total += count;
-            categoryEntry.participants.push({ id: partId, count: count });
+            categoryEntry.total += result.count;
+            categoryEntry.participants.push({ id: result._id.participantId, count: result.count });
         }
 
-         const finalResults: CategoryResult[] = [];
-        for (const [catId, data] of groupedResults.entries()) {
-            const categoryName = categoryMap.get(catId) || `Categoría ID: ${catId}`;
+        return Array.from(groupedResults.entries()).map(([catId, data]) => {
+            const catInfo = categoryMap.get(catId);
+            const categoryName = catInfo?.name || "Desconocida";
             const isOpenEnded = OPEN_ENDED_CATEGORIES.includes(categoryName);
 
-            const processedParticipants = data.participants
-                .map(p => {
-                    const nicknameOrText = isOpenEnded
-                        ? p.id
-                        : participantMap.get(p.id) || `Participante ID: ${p.id}`;
-
-                    return {
-                        nickname: nicknameOrText,
-                        votes: p.count,
-                        percentage: (p.count / data.total) * 100
-                    };
-                })
-                .sort((a, b) => b.votes - a.votes);
-
-            finalResults.push({
+            return {
                 categoryName: categoryName,
+                categoryDescription: catInfo?.desc || "Sin descripción disponible.",
+                categoryImage: catInfo?.img || "/category-default.jpg",
                 totalVotes: data.total,
-                participants: processedParticipants,
                 isOpenEnded: isOpenEnded,
-            });
-        }
-        return finalResults;    
+                participants: data.participants
+                    .map(p => {
+                        const pInfo = participantMap.get(p.id);
+                        return {
+                            nickname: isOpenEnded ? p.id : pInfo?.nickname || "Anónimo",
+                            userImage: pInfo?.img || "/default-avatar.png", 
+                            votes: p.count,
+                            percentage: (p.count / data.total) * 100
+                        };
+                    })
+                    .sort((a, b) => b.votes - a.votes)
+            };
+        });
     }, [rawResults, categories, participants]);
 
-    const totalPages = dashboardData.length;
     const currentCategory = dashboardData[currentPage - 1];
 
-    const handlePageChange = (direction: 'next' | 'prev') => {
-        setShowResults(false);
-        if (direction === 'next') {
-            setCurrentPage(prev => Math.min(totalPages, prev + 1));
-        } else {
-            setCurrentPage(prev => Math.max(1, prev - 1));
-        }
-    };  
-
     if (loading) return <div className="dashboard-container"><p>⏳ Cargando resultados...</p></div>;
-    if (error) return <div className="dashboard-container"><p className="error-message">{error}</p></div>;
-    if (dashboardData.length === 0) return <div className="dashboard-container"><p>⚠️ No hay datos registrados.</p></div>;
+    if (error) return <div className="dashboard-container"><p>{error}</p></div>;
+    if (dashboardData.length === 0) return <div className="dashboard-container"><p>No hay resultados disponibles.</p></div>;
 
     return (
         <div className="dashboard-container">
             <header className="dashboard-header">
-                <h1>📊 Resultados Marrino Awards 2025</h1>
-                <p>Análisis de votos: Categoría {currentPage} de {totalPages}</p>
-                <div className="total-votes-summary">
-                    Votos en esta categoría: <strong>{currentCategory.totalVotes}</strong>
-                </div>
+                <h1>Ganadores Marrino Awards 2025</h1>
+                <p>Categoría {currentPage} de {dashboardData.length}</p>
             </header>
 
             <div 
                 className={`category-card ${showResults ? 'card-expanded' : 'card-collapsed'}`}
                 onClick={() => setShowResults(!showResults)}
-            >   
-                {/* Contenedor centralizado para título y mensaje */}
+            >
                 <div className="category-info-wrapper">
+                    <div className="category-image-container">
+                        <img 
+                            src={currentCategory.categoryImage} 
+                            alt={currentCategory.categoryName} 
+                            className="category-image" 
+                        />
+                    </div>
                     <h2 className="category-title">{currentCategory.categoryName}</h2>
                     
-                    {!showResults && (
-                        <div className="click-prompt">
-                            <p>Haz clic para revelar la clasificación de esta categoría</p>
-                        </div>
-                    )}
+                    <p className="category-description-text">
+                        {currentCategory.categoryDescription}
+                    </p>
+
+                    {!showResults && <p className="click-prompt">Haz clic para revelar resultados</p>}
                 </div>
 
                 {showResults && (
                     <div className="results-list">
                         {currentCategory.participants.map((p, index) => (
-                            <div key={p.nickname + index} className={`participant-result ${index === 0 ? 'winner' : ''}`}>
+                            <div key={index} className={`participant-result ${index === 0 ? 'winner' : ''}`}>
                                 <span className="rank">{index + 1}.</span>
-                                <span className="name">
-                                    {currentCategory.isOpenEnded && p.nickname.length > 50
-                                        ? p.nickname.substring(0, 50) + '...'
-                                        : p.nickname
-                                    }
-                                </span>
+                                
+                                <div className="participant-avatar-container">
+                                    <img 
+                                        src={p.userImage} 
+                                        alt={p.nickname} 
+                                        className="participant-avatar" 
+                                    />
+                                </div>
+
+                                <span className="name">{p.nickname}</span>
+                                
                                 <div className="bar-container">
                                     <div 
                                         className="vote-bar" 
-                                        style={{ width: `${p.percentage.toFixed(1)}%` }}
+                                        style={{ width: `${p.percentage}%` }}
                                     ></div>
                                 </div>
+                                
                                 <span className="vote-count">
-                                    <strong>{p.votes}</strong> ({p.percentage.toFixed(1)}%)
+                                    <strong>{p.votes}</strong> {p.votes === 1 ? 'voto' : 'votos'}
                                 </span>
+                                
                                 {index === 0 && <span className="trophy">🏆</span>}
                             </div>
                         ))}
@@ -189,16 +191,22 @@ const ResultsDashboard: React.FC = () => {
             </div>
 
             <div className="pagination-controls">
-                <button onClick={() => handlePageChange('prev')} disabled={currentPage === 1}>
-                    &larr; Anterior
+                <button 
+                    onClick={() => {setCurrentPage(p => p - 1); setShowResults(false)}} 
+                    disabled={currentPage === 1}
+                >
+                    Anterior
                 </button>
-                <span>{currentPage} / {totalPages}</span>
-                <button onClick={() => handlePageChange('next')} disabled={currentPage === totalPages}>
-                    Siguiente &rarr;
+                <span>{currentPage} / {dashboardData.length}</span>
+                <button 
+                    onClick={() => {setCurrentPage(p => p + 1); setShowResults(false)}} 
+                    disabled={currentPage === dashboardData.length}
+                >
+                    Siguiente
                 </button>
             </div>
         </div>
     );
 };
 
-    export default ResultsDashboard;
+export default ResultsDashboard;

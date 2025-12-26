@@ -11,11 +11,14 @@ const OPEN_ENDED_CATEGORIES = ["Top pendejito externo", "Mejor momento del año"
 interface CategoryType {
     _id: string;
     name: string;
+    description?: string;
+    imageUrl?: string;
 }
 
 interface ParticipantType {
     _id: string;
     nickname: string;
+    imageUrl?: string;
 }
 
 type Votes = { 
@@ -83,8 +86,18 @@ const VotingCategorySection: React.FC<VotingCategorySectionProps> = ({ category,
     return (
         <div className="voting-section">
             <div className="category-header-vote">
-                <span className="category-number">{index}</span> 
-                <h2 className="category-title-vote">{category.name}</h2>
+                <div className="category-image-vote-container">
+                     <img 
+                        src={category.imageUrl || "/category-default.jpg"} 
+                        alt={category.name} 
+                        className="category-image-vote" 
+                    />
+                </div>
+                <div className="category-text-info">
+                    <span className="category-number">Categoría {index}</span> 
+                    <h2 className="category-title-vote">{category.name}</h2>
+                    {category.description && <p className="category-desc-vote">{category.description}</p>}
+                </div>
             </div>
 
             {isOpenEnded ? (
@@ -102,14 +115,23 @@ const VotingCategorySection: React.FC<VotingCategorySectionProps> = ({ category,
                             className={`participant-list-item ${voteValue === p._id ? 'selected' : ''}`}
                             onClick={() => handleClosedVote(category._id, p._id)} 
                         >
-                            <span className="participant-name-vote">{p.nickname}</span>
+                            <div className="participant-info-vote">
+                                <div className="participant-avatar-vote-container">
+                                    <img 
+                                        src={p.imageUrl || "/default-avatar.png"} 
+                                        alt={p.nickname} 
+                                        className="participant-avatar-vote" 
+                                    />
+                                </div>
+                                <span className="participant-name-vote">{p.nickname}</span>
+                            </div>
                             
                             <input
                                 type="radio"
                                 name={`vote-${category._id}`} 
                                 value={p._id} 
                                 checked={voteValue === p._id}
-                                onChange={() => handleClosedVote(category._id, p._id)} 
+                                readOnly
                             />
                         </li>
                     ))}
@@ -118,8 +140,8 @@ const VotingCategorySection: React.FC<VotingCategorySectionProps> = ({ category,
             
             <div className="vote-status">
                 {isOpenEnded 
-                    ? (voteValue ? `¡Respuesta registrada: "${voteValue.substring(0, 30)}${voteValue.length > 30 ? '...' : ''}"` : 'Aún no has escrito tu voto.')
-                    : (voteValue ? `¡Voto registrado para ${getParticipantNickname(voteValue)}!` : 'Aún no has votado en esta categoría.')
+                    ? (voteValue ? `📝 Respuesta lista` : 'Aún no has escrito tu voto.')
+                    : (voteValue ? `✅ Seleccionado: ${getParticipantNickname(voteValue)}` : 'Aún no has votado en esta categoría.')
                 }
             </div>
         </div>
@@ -127,7 +149,6 @@ const VotingCategorySection: React.FC<VotingCategorySectionProps> = ({ category,
 };
 
 const MemoizedVotingCategorySection = React.memo(VotingCategorySection);
-
 
 const VotingPage: React.FC = () => {
     const [categories, setCategories] = useState<CategoryType[]>([]);
@@ -140,7 +161,6 @@ const VotingPage: React.FC = () => {
 
     const [loadingCategories, setLoadingCategories] = useState(true);
     const [loadingParticipants, setLoadingParticipants] = useState(true);
-    const [error, setError] = useState<string | null>(null);
     
     const categoriesPerPage = 3;
     const [currentPage, setCurrentPage] = useState(1);
@@ -159,13 +179,11 @@ const VotingPage: React.FC = () => {
                 const response = await axios.get(API_CATEGORIES_URL);
                 setCategories(response.data);
             } catch (err) {
-                console.error("Error al obtener categorías:", err);
-                setError('❌ No se pudieron cargar las categorías. Verifica la API.');
+                setMessage('❌ No se pudieron cargar las categorías.');
             } finally {
                 setLoadingCategories(false);
             }
         };
-
         fetchCategories();
     }, []);
 
@@ -175,13 +193,11 @@ const VotingPage: React.FC = () => {
                 const response = await axios.get(API_PARTICIPANTS_URL);
                 setParticipants(response.data);
             } catch (err) {
-                console.error("Error al obtener participantes:", err);
-                setError(prev => prev || '❌ No se pudieron cargar los participantes. Verifica la API.');
+                setMessage('❌ No se pudieron cargar los participantes.');
             } finally {
                 setLoadingParticipants(false);
             }
         };
-
         fetchParticipants();
     }, []);
     
@@ -198,7 +214,7 @@ const VotingPage: React.FC = () => {
 
     const validateEmail = (): boolean => {
         if (!email.match(/^[^\s@]+@[^\s@]+\.[^\s@]+$/)) {
-            setMessage("🚨 ¡CORREO REQUERIDO! Por favor Marrano, introduce un correo válido en la primera página para poder votar");
+            setMessage("🚨 ¡CORREO REQUERIDO! Por favor introduce un correo válido.");
             return false;
         }
         setMessage(null);
@@ -218,22 +234,15 @@ const VotingPage: React.FC = () => {
     };
     
     const handleClosedVote = (categoryId: string, participantId: string) => {
-        setVotes(prevVotes => ({
-            ...prevVotes,
-            [categoryId]: participantId,
-        }));
+        setVotes(prevVotes => ({ ...prevVotes, [categoryId]: participantId }));
     };
     
     const handleOpenVote = (categoryId: string, textValue: string) => {
-        setVotes(prevVotes => ({
-            ...prevVotes,
-            [categoryId]: textValue,
-        }));
+        setVotes(prevVotes => ({ ...prevVotes, [categoryId]: textValue }));
     };
     
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        
         if (isSubmitting) return; 
         setIsSubmitting(true);
         
@@ -247,48 +256,36 @@ const VotingPage: React.FC = () => {
         
         const allVotesAreValid = categories.every(cat => {
             const voteValue = votes[cat._id];
-            
             if (OPEN_ENDED_CATEGORIES.includes(cat.name)) {
                 return typeof voteValue === 'string' && voteValue.trim() !== '';
             }
             return typeof voteValue === 'string' && voteValue !== ''; 
         });
 
-
         if (votedCount < totalCategories || !allVotesAreValid) {
-            setMessage(`🚨 ¡Atención! Solo has votado en ${votedCount} de ${totalCategories} categorías o hay campos de texto vacíos. ¡Vota en todas para enviar!`);
+            setMessage(`🚨 ¡Atención! Solo has votado en ${votedCount} de ${totalCategories} categorías.`);
             setIsSubmitting(false);
             return;
         }
-
-        const finalData = { 
-            email, 
-            votes, 
-            timestamp: new Date().toISOString() 
-        };
 
         try {
             const response = await fetch(API_VOTES_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(finalData),
+                body: JSON.stringify({ email, votes, timestamp: new Date().toISOString() }),
             });
             
-            const result = await response.json();
-
             if (!response.ok) {
                 if (response.status === 409) { 
-                    setMessage(`⚠️ ¡VOTO DUPLICADO! El correo ${email} ya ha emitido su voto.`);
+                    setMessage(`⚠️ ¡VOTO DUPLICADO! El correo ${email} ya ha votado.`);
                 } else {
-                    throw new Error(result.message || 'Error desconocido al enviar voto.');
+                    throw new Error('Error al enviar voto.');
                 }
             } else {
-                setMessage("✅ ¡VOTOS ENVIADOS! Gracias por participar en los Marrino Awards");
+                setMessage("✅ ¡VOTOS ENVIADOS! Gracias por participar.");
             }
-
         } catch (error) {
-            console.error("Error al enviar el voto:", error);
-            setMessage("🔴 ERROR DE CONEXIÓN. Hubo un error al enviar el voto.");
+            setMessage("🔴 ERROR DE CONEXIÓN.");
         } finally {
             setIsSubmitting(false);
         }
@@ -296,13 +293,11 @@ const VotingPage: React.FC = () => {
     
     const allVotesAreValid = categories.every(cat => {
         const voteValue = votes[cat._id];
-        
         if (OPEN_ENDED_CATEGORIES.includes(cat.name)) {
             return typeof voteValue === 'string' && voteValue.trim() !== '';
         }
         return typeof voteValue === 'string' && voteValue !== ''; 
     });
-
 
     const PaginationControls: React.FC = () => (
         <div className="pagination-controls numeric">
@@ -311,7 +306,7 @@ const VotingPage: React.FC = () => {
                     key={pageNumber}
                     type="button"
                     onClick={() => goToPage(pageNumber)}
-                    disabled={isSubmitting || loadingCategories || loadingParticipants || pageNumber === currentPage}
+                    disabled={isSubmitting || pageNumber === currentPage}
                     className={`page-number-button ${pageNumber === currentPage ? 'active' : ''}`}
                 >
                     {pageNumber}
@@ -320,86 +315,62 @@ const VotingPage: React.FC = () => {
         </div>
     );
 
+    if (loadingCategories || loadingParticipants) return <div className="voting-container"><p>⏳ Cargando...</p></div>;
 
-    if (loadingCategories || loadingParticipants) {
-        return <div className="voting-container"><p>⏳ Cargando datos para la votación...</p></div>;
-    }
-
-    if (error) {
-        return <div className="voting-container"><p style={{color: 'red', fontWeight: 'bold'}}>{error}</p></div>;
-    }
-    
-    if (categories.length === 0 || participants.length === 0) {
-        return <div className="voting-container"><p style={{color: 'orange'}}>⚠️ Faltan datos: Asegúrate de que haya categorías ({categories.length}) y participantes ({participants.length}) en la base de datos.</p></div>;
-    }
-    
     return (
         <div className="voting-container">
             {message && (
-                <div className={`toast-notification ${message.includes('🚨') || message.includes('⚠️') || message.includes('🔴') ? 'error' : 'success'}`}>
+                <div className={`toast-notification ${message.includes('🚨') || message.includes('⚠️') || message.includes('🔴') || message.includes('❌') ? 'error' : 'success'}`}>
                     {message}
                     <button onClick={() => setMessage(null)} className="toast-close-button">×</button>
                 </div>
             )}
             
             <header className="page-header">
-                <h1> Vota para decidir ganadores de cada categoria de los Marrino Awards 2025</h1>
-                <p>Tu voto es único. Navega por las {categories.length} categorías</p>
+                <h1>Marrino Awards 2025</h1>
+                <p>Navega por las {categories.length} categorías</p>
                 <div className="pagination-info">Página {currentPage} de {totalPages}</div>
             </header>
 
             <form onSubmit={handleSubmit}>
                 {currentPage === 1 && (
                     <div className="email-input-group">
-                        <label htmlFor="email">Tu Correo Electrónico (correo valido y nomas uno pendejo )</label>
+                        <label htmlFor="email">Tu Correo Electrónico</label>
                         <input 
-                            type="email" 
-                            id="email" 
-                            value={email} 
+                            type="email" id="email" value={email} 
                             onChange={(e) => setEmail(e.target.value)}
-                            placeholder="ejemplo@marrino.com"
-                            required
+                            placeholder="ejemplo@marrino.com" required
                             disabled={isSubmitting}
-                            onBlur={() => currentPage === 1 && validateEmail()} 
                         />
                     </div>
                 )}
                 
                 <PaginationControls />
 
-                {currentCategories.map((category, index) => {
-                    const realIndex = (currentPage - 1) * categoriesPerPage + index + 1;
-                    return (
-                        <MemoizedVotingCategorySection 
-                            key={category._id} 
-                            category={category}
-                            index={realIndex}
-                            votes={votes}
-                            participants={participants}
-                            handleClosedVote={handleClosedVote}
-                            handleOpenVote={handleOpenVote}
-                        />
-                    );
-                })}
+                {currentCategories.map((category, index) => (
+                    <MemoizedVotingCategorySection 
+                        key={category._id} 
+                        category={category}
+                        index={(currentPage - 1) * categoriesPerPage + index + 1}
+                        votes={votes}
+                        participants={participants}
+                        handleClosedVote={handleClosedVote}
+                        handleOpenVote={handleOpenVote}
+                    />
+                ))}
                 
                 <PaginationControls />
 
                 {currentPage === totalPages && (
-                    <>
+                    <div className="submit-section">
                         <button 
                             type="submit" 
                             className="submit-button-vote"
                             disabled={!allVotesAreValid || isSubmitting} 
                         >
-                            {isSubmitting
-                                ? 'Enviando Votos...'
-                                : !allVotesAreValid
-                                    ? `Votar (${Object.keys(votes).length} / ${categories.length} completado)`
-                                    : 'ENVIAR VOTOS FINALES'
-                            }
+                            {isSubmitting ? 'Enviando...' : 'ENVIAR VOTOS FINALES'}
                         </button>
-                        <p className="final-note">Asegúrate de haber seleccionado o escrito un voto en todas las categorías antes de enviar.</p>
-                    </>
+                    </div>
                 )}
             </form>
         </div>
