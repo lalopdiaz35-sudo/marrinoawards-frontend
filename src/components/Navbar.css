@@ -1,0 +1,149 @@
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 30px;
+    
+    background: linear-gradient(
+        180deg, 
+        rgba(44, 44, 44, 0.95) 0%,
+        rgba(26, 26, 26, 0.9) 100% 
+    );
+    
+    color: var(--color-text-light);
+    
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7); 
+    
+    backdrop-filter: blur(5px); 
+    
+    z-index: 1000;
+    position: sticky;
+    top: 0;
+}
+.navbar-brand a {
+    color: var(--color-accent-gold);
+    font-size: 1.8em;
+    text-decoration: none;
+    font-weight: 700;
+    
+    text-shadow: 0 0 5px rgba(255, 215, 0, 0.4);
+}
+.nav-links {
+    list-style: none;
+    display: flex;
+}
+.nav-links li {
+    margin-left: 30px;
+}
+
+/* Estilos base para links y el botón de Logout */
+.nav-links a, .navbar .logout-button {
+    color: var(--color-text-light);
+    text-decoration: none;
+    padding: 8px 15px;
+    transition: all 0.3s ease;
+    border-radius: 5px;
+    font-weight: 600;
+    cursor: pointer;
+}
+.nav-links a:hover, .navbar .logout-button:hover {
+    color: var(--color-accent-gold);
+    background-color: rgba(255, 215, 0, 0.1); 
+}
+
+/* --- ESTILOS DE AUTENTICACIÓN (LOGIN/VOTAR/SALIR) --- */
+
+/* 1. Estilo para el botón de Login/Salir (que tendrá borde dorado) */
+.nav-item-auth .logout-button {
+    background-color: transparent;
+    border: 1px solid var(--color-accent-gold);
+    color: var(--color-accent-gold);
+    font-weight: 700;
+    padding: 8px 20px;
+}
+
+.nav-item-auth .logout-button:hover {
+    background-color: var(--color-accent-gold);
+    color: var(--color-primary-dark);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+}
+
+/* 2. Estilo para el Link de Votar (que tendrá fondo sólido dorado) */
+.nav-item-votar a {
+    background-color: var(--color-accent-gold);
+    color: var(--color-primary-dark);
+    font-weight: 700;
+    padding: 8px 20px;
+}
+
+.nav-item-votar a:hover {
+    background-color: var(--color-button-hover);
+    color: var(--color-primary-dark);
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.6);
+}
+
+/* ELIMINAMOS las reglas genéricas que usabas para el :last-child,
+   ya que ahora manejamos los estilos con las clases específicas. */
+/* Eliminado: .nav-links li:last-child a, .nav-links li:last-child .logout-button, etc. */
+
+
+.menu-toggle {
+    display: none;
+    cursor: pointer;
+    font-size: 24px;
+    color: var(--color-accent-gold);
+    background: none;
+    border: none;
+    padding: 0;
+}
+
+/* ================================================= */
+/* MEDIA QUERIES (RESPONSIVO)                        */
+/* ================================================= */
+
+@media (max-width: 900px) {
+    .navbar {
+        padding: 15px 20px;
+    }
+
+    .menu-toggle {
+        display: block;
+    }
+
+    .nav-links {
+        display: none;
+        flex-direction: column;
+        width: 100%;
+        position: absolute;
+        top: 60px;
+        left: 0;
+        background-color: rgba(26, 26, 26, 0.95);
+        border-top: 1px solid rgba(255, 215, 0, 0.1);
+        padding: 10px 0;
+    }
+    
+    .nav-links.open {
+        display: flex;
+    }
+
+    .nav-links li {
+        margin: 0;
+        text-align: center;
+        width: 100%;
+    }
+
+    .nav-links a, .navbar .logout-button {
+        display: block;
+        padding: 15px 20px;
+        border-radius: 0;
+    }
+    
+    /* Aseguramos que los botones de Votar y Auth se vean como bloques completos en móvil */
+    .nav-item-votar a,
+    .nav-item-auth .logout-button {
+        margin-top: 10px;
+        border-radius: 5px;
+        width: 90%;
+        margin-left: 5%;
+    }
+}
